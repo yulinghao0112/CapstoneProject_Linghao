@@ -1,0 +1,3 @@
+# blacklist.py
+
+blacklist = set()

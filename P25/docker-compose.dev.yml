@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: p25-backend-dev
+    ports:
+      - "3001:5002"        # 本机3001 -> 容器5002
+      - "5002:5002"
+    volumes:
+      - ./backend:/app
+      - backend_venv_cache:/root/.cache/pip
+    env_file:
+      - ./backend/.env
+    networks:
+      - p25net
+
+  frontend:
+    build:
+      context: ./admin       # 这里改成 admin 文件夹
+      dockerfile: Dockerfile.dev
+    container_name: p25-frontend-dev
+    ports:
+      - "3000:3000"          # 本机 3000 -> 容器 3000
+    volumes:
+      - ./admin:/app         # 这里也改成 admin
+      - frontend_node_cache:/root/.cache/yarn
+    environment:
+      # CRA: REACT_APP_API_BASE; Vite: VITE_API_BASE
+      - REACT_APP_API_BASE=http://localhost:3001
+    depends_on:
+      - backend
+    networks:
+      - p25net
+
+networks:
+  p25net:
+
+volumes:
+  backend_venv_cache:
+  frontend_node_cache:

@@ -1,0 +1,25 @@
+[run]
+source = backend
+omit = 
+    backend/venv/*
+    backend/tests/*
+    backend/migrations/*
+    backend/instance/*
+    */__pycache__/*
+    */site-packages/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__                                                            
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+
+[html]
+directory = htmlcov
+title = Backend Test Coverage Report
+
+[xml]
+output = coverage.xml                       

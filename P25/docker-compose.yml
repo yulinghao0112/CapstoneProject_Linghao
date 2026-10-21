@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: p25-backend
+    expose:
+      - "5000"
+    env_file:
+      - ./backend/.env
+    networks:
+      - p25net
+
+  frontend:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.dev
+    container_name: p25-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./admin:/app
+    depends_on:
+      - backend
+    networks:
+      - p25net
+
+networks:
+  p25net:
