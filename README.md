@@ -1,274 +1,373 @@
-# P25 Application - Setup Guide
+# AI Collaboration Platform for Group Projects
+
+A UNSW capstone project designed to support group collaboration through meeting management, Jira integration, AI-assisted summaries and action items, task tracking, voice transcription, and team contribution features.
+
+> **Project status:** This project was originally developed in 2025 as a university team project. Some third-party integrations, including Jira OAuth, Gemini, AssemblyAI, and the hosted database, require new credentials or configuration to run today. This repository is maintained as a portfolio project to demonstrate the system architecture, backend development, API integration, database design, testing, and AI integration.
+
+---
+
+## Features
+
+- **User Authentication** — JWT-based authentication for user login and protected backend routes.
+- **Meeting Management** — Create, list and delete meetings through the application.
+- **Transcript Upload and AI Summary** — Upload meeting transcripts and generate summaries, key points and action items using Gemini.
+- **Voice Meeting Support** — Process recorded meeting audio using AssemblyAI diarization and support speaker identification / renaming.
+- **Jira Integration** — Connect Jira through OAuth, retrieve project information, synchronise issues and create tasks from the application.
+- **AI Chat Assistant** — Conversational interface powered by Gemini to help users work with project and meeting information.
+- **Task and Reminder Tracking** — Track project tasks, action items and reminders.
+- **Contribution Dashboard** — Provide visibility into team participation and contribution data.
+- **REST API Backend** — Flask-based backend exposing application functionality to the frontend.
+- **Automated Testing** — Unit, integration and end-to-end testing support.
+
+---
+
+## Architecture
+
+```text
+                         +----------------------+
+                         |      React Frontend  |
+                         |    User Interface    |
+                         +----------+-----------+
+                                    |
+                                    | REST API
+                                    v
+                         +----------------------+
+                         |     Flask Backend    |
+                         |  Auth / Meetings /   |
+                         |  Jira / AI / Tasks   |
+                         +----+-----------+-----+
+                              |           |
+                  +-----------+           +----------------+
+                  |                                        |
+                  v                                        v
+        +----------------------+                  +----------------------+
+        | PostgreSQL /         |                  | External Services    |
+        | SQLAlchemy           |                  |                      |
+        | Users / Meetings /   |                  | Jira OAuth + API     |
+        | Tasks / App Data     |                  | Gemini API           |
+        +----------------------+                  | AssemblyAI API       |
+                                                  +----------------------+
+
+Additional real-time processing components can use Redis / Redis Streams where required by the application workflow.
+```
+
+### High-level data flow
+
+1. The React frontend sends requests to the Flask backend through REST APIs.
+2. The Flask backend handles authentication, business logic and application workflows.
+3. Application data is stored in PostgreSQL through SQLAlchemy.
+4. Jira integration uses OAuth and Jira REST APIs for project and task synchronisation.
+5. Gemini processes meeting content and other project information for summaries, action items and conversational assistance.
+6. AssemblyAI is used for audio transcription and speaker diarization in voice meeting workflows.
+
+---
+
+## Technology Stack
+
+### Backend
+- Python
+- Flask
+- REST APIs
+- SQLAlchemy
+- JWT authentication
+
+### Frontend
+- React
+- JavaScript
+- Yarn
+
+### Data and Messaging
+- PostgreSQL
+- Redis
+- Redis Streams
+
+### Integrations and AI
+- Jira OAuth 2.0
+- Jira REST APIs
+- Gemini API
+- AssemblyAI
+
+### Development and Testing
+- Docker / Docker Compose
+- Git
+- Unit testing
+- Integration testing
+- End-to-end testing
+- Swagger / API documentation
+
+---
+
+## My Contribution
+
+This was a team capstone project. My primary contribution focused on:
+
+- Leading the team as Scrum Master and coordinating delivery across the project.
+- Backend development using Python and Flask.
+- Jira authentication and integration workflows.
+- AI / LLM integration, particularly Gemini-based meeting summaries, key points and action items.
+- Backend API and database integration.
+- Supporting system integration, debugging and project delivery across frontend, backend and external services.
+
+---
 
 ## Prerequisites
-- Git installed (to clone this repository)
-- **Docker**: [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running
-- **Local**: Python 3.11+, Node.js 20+, Yarn
+
+- Git
+- Docker Desktop installed and running
+- For local development: Python 3.11+, Node.js 20+, Yarn
 
 ---
 
-## 1. Clone the Repository or Unzip Final-9900.zip
+## 1. Clone the Repository
 
-### Method 1: Clone from GitHub
 ```bash
-git clone git@github.com:unsw-cse-comp99-3900/capstone-project-9900-w14a-almond.git
-```
-```bash
-cd capstone-project-9900-w14a-almond/P25
-```
-
-### Method 2: Unzip from Final-9900.zip
-Unzip the `Final-9900.zip` file to your desired location, then:
-```bash
-cd capstone-project-9900-w14a-almond/P25
+git clone git@github.com:yulinghao0112/CapstoneProject_Linghao.git
+cd CapstoneProject_Linghao/P25
 ```
 
 ---
 
-## 2. Start the Application with Docker or in Local Environment
+## 2. Environment Configuration
 
-### Method 1: Run with Docker (Recommended)
+The repository does **not** include active API keys, passwords, tokens or production credentials.
 
-#### Step 1. Install cross-env under Frontend Folder 'admin'
-Please navigate to `./capstone-project-9900-w14a-almond/P25/admin`
-```bash
-#./capstone-project-9900-w14a-almond/P25/
-cd admin
-# Make sure you have Node.js 20+
-# For Example, you can run: nvm use 20 
+Create a local `.env` file under:
+
+```text
+P25/backend/.env
 ```
-Under `./capstone-project-9900-w14a-almond/P25/admin`
-```bash
-#./capstone-project-9900-w14a-almond/P25/admin
-yarn add -D cross-env 
-```
-#### Step 2. Create .env File
-Now, please create a `.env` file under the directory `./capstone-project-9900-w14a-almond/P25/backend`. You can use the provided `.env_example` file as a template:
+
+Use the provided example file as a template:
 
 ```bash
-cd ..
-# Navigate to backend directory
-cd backend
-# Copy the example file and rename it
+cd P25/backend
 cp .env_example .env
 ```
 
-Then edit the `.env` file with your actual API keys and configuration values. See the [API Key Instruction](#5-api-key-instruction) section below for details on how to obtain these credentials. 
-#### Step 3. Run in Container
-***Start***: 
+Replace the placeholder values with your own local credentials.
 
+**Never commit `.env`, API keys, passwords or tokens to GitHub.**
 
-Now navigate to `./capstone-project-9900-w14a-almond/P25`, proceed with the following commands: 
+Some external integrations may require configuration updates because third-party APIs and OAuth settings can change over time.
+
+Example environment variables include:
+
+```env
+DATABASE_URL=your_database_url_here
+JWT_SECRET_KEY=your_jwt_secret_here
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
+JIRA_OAUTH_CLIENT_ID=your_jira_oauth_client_id_here
+JIRA_OAUTH_CLIENT_SECRET=your_jira_oauth_client_secret_here
+JIRA_OAUTH_SUCCESS_REDIRECT=http://localhost:3000/jira
+OAUTH_STATE_EXPIRY_MINUTES=60
+
+FLASK_SECRET_KEY=your_flask_secret_key_here
+
+JIRA_SITE_NAME=your_jira_site_name_here
+JIRA_PROJECT_KEY=your_jira_project_key_here
+JIRA_USERNAME=your_jira_username_here
+JIRA_API_TOKEN=your_jira_api_token_here
+```
+
+AssemblyAI credentials should also be configured locally using the project's current configuration mechanism. Do not hard-code the key in source files.
+
+---
+
+## 3. Run with Docker
+
+Docker is the recommended way to run the project.
+
+### Step 1: Prepare the frontend
+
 ```bash
-#./capstone-project-9900-w14a-almond/P25/admin
-cd ..
-#./capstone-project-9900-w14a-almond/P25
+cd CapstoneProject_Linghao/P25/admin
+nvm use 20
+```
+
+Install `cross-env` if required:
+
+```bash
+yarn add -D cross-env
+```
+
+### Step 2: Start the application
+
+From:
+
+```text
+CapstoneProject_Linghao/P25
+```
+
+run:
+
+```bash
 docker compose -f docker-compose.dev.yml build
 docker compose -f docker-compose.dev.yml up -d
 ```
-***Access***:
-#### Our application will run on: <http://localhost:3000>
-- Backend API: 
-  - API docs: <http://localhost:3001/apidocs>
-  
-***Stop***:
+
+### Access
+
+Frontend:
+
+```text
+http://localhost:3000
+```
+
+Backend API documentation:
+
+```text
+http://localhost:3001/apidocs
+```
+
+### Stop
+
 ```bash
 docker compose -f docker-compose.dev.yml down
 ```
 
 ---
 
-### Method 2: Run Locally (No Docker)
+## 4. Run Locally Without Docker
 
 ### Backend
-Navigate to backend directory `./capstone-project-9900-w14a-almond/P25/backend`:
+
+Navigate to the backend directory:
+
 ```bash
-cd backend
+cd CapstoneProject_Linghao/P25/backend
 ```
-Install required backend environments:
+
+Create and activate a virtual environment:
+
 ```bash
-#./capstone-project-9900-w14a-almond/P25/backend
 python3 -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-Start backend:
+
+Start the backend:
+
 ```bash
-# Start backend
 python3 app.py
 ```
-Backend will run at <http://localhost:5002>.
 
-### Frontend (Admin)
-Open a new terminal, navigate to frontend directory `./capstone-project-9900-w14a-almond/P25/admin`:
-```bash
-cd ../admin
+The backend runs at:
+
+```text
+http://localhost:5002
 ```
-Install frontend environments:
+
+### Frontend
+
+Open a new terminal:
+
 ```bash
-#./capstone-project-9900-w14a-almond/P25/admin
+cd CapstoneProject_Linghao/P25/admin
 yarn install
-```
-Start frontend:
-```bash
-# Start frontend
 yarn start
 ```
-#### Our application will run at <http://localhost:3000>.  
+
+The frontend runs at:
+
+```text
+http://localhost:3000
+```
 
 ---
 
-## 3. Demo Account
-- Email: `demo@gmail.com`
-- Password: `Demo123123`
+## 5. Testing
 
----
+From:
 
-## 4. Testing
-Please navigate to `/capstone-project-9900-w14a-almond/P25`, then enter the following commands for testing:
-- Make sure you have both backend and frontend up and running, navigate to `/capstone-project-9900-w14a-almond/P25`:
+```text
+CapstoneProject_Linghao/P25
+```
+
+make sure the application is running:
+
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
-- Install requirements under `/capstone-project-9900-w14a-almond/P25`:
+
+Create a Python environment if required:
+
 ```bash
 python3 -m venv venv
-source venv/bin/activate   # macOS/Linux
-# Windows: venv\Scripts\activate
-```
-```bash
+source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-## Under `/capstone-project-9900-w14a-almond/P25`
-### For automated unit and integration testing:
-- Run test command:
+
+### Unit and Integration Tests
+
 ```bash
-python3 run_comprehensive_tests.py 
+python3 run_comprehensive_tests.py
 ```
 
-### For automated end-to-end testing:
-- Run test command:
+### End-to-End Tests
+
 ```bash
 python3 run_e2e_tests.py
 ```
-For full testing manual, please navigate to `/capstone-project-9900-w14a-almond/P25/`, refer to:
-```bash
-README_TESTS.md
+
+For more detailed testing information, see:
+
+```text
+P25/README_TESTS.md
 ```
 
 ---
 
+## 6. Third-Party Service Setup
 
-## 5. API Key Instruction
-Note: All API Keys are set to be valid for the next 3 months, after this period, all API keys will be expired. 
-You can replace the following API keys with your own API keys.
+### Jira OAuth
 
-**Important**: Remember to copy `.env_example` to `.env` first, then follow the instructions below to configure your environment variables.
+To enable Jira integration:
 
-### Secret Keys Configuration
-- Navigate to `/capstone-project-9900-w14a-almond/P25/backend/.env`
+1. Go to the Atlassian Developer Console.
+2. Create a new OAuth 2.0 application.
+3. Configure the required Jira scopes.
+4. Configure the callback / redirect URL.
+5. Add the client ID and client secret to your local `.env` file.
 
-The following secret keys are used for security purposes in the application:
+The original development credentials are no longer included in this repository.
 
-- **FLASK_SECRET_KEY**: Used by Flask for session management, CSRF protection, and other security features. This should be a random, secure string. You can generate your own or keep the default for development.
+### Gemini
 
-- **JWT_SECRET_KEY**: Used for signing and verifying JSON Web Tokens (JWT) for user authentication. This should be a strong, random secret key. You can generate your own or keep the default for development.
+Create your own Gemini API key through Google AI Studio and add it to your local `.env` file.
 
-### JIRA OAuth Configuration
-- Navigate to `/capstone-project-9900-w14a-almond/P25/backend/.env`
+### AssemblyAI
 
-For JIRA integration, you need to set up OAuth credentials:
+Create your own AssemblyAI API key and configure it locally. Do not commit the key to the repository.
 
-- **JIRA_OAUTH_CLIENT_ID**: The client ID for your JIRA OAuth app
-- **JIRA_OAUTH_CLIENT_SECRET**: The client secret for your JIRA OAuth app  
-- **JIRA_OAUTH_SUCCESS_REDIRECT**: The redirect URL after successful OAuth authentication
+### PostgreSQL / Neon
 
-To obtain these credentials:
-1. Go to https://developer.atlassian.com/console/myapps/
-2. Create a new app or select an existing one
-3. Navigate to OAuth 2.0 (3LO) settings
-4. Add appropriate scopes (recommended: `read:jira-user`, `read:jira-work`, `write:jira-work`)
-5. Set your callback URL (should match JIRA_OAUTH_SUCCESS_REDIRECT)
-6. Copy the Client ID and Client Secret to your .env file
+Create your own PostgreSQL database or Neon project and add the connection string to:
 
-Note: Ensure your OAuth app has the necessary permissions and scopes for the JIRA features you plan to use. 
-### Assembly API Key
-- Navigate to `/capstone-project-9900-w14a-almond/P25/backend/routes/audio_helpers.py`
-```bash
-ASSEMBLYAI_API_KEY
+```env
+DATABASE_URL=your_database_url_here
 ```
-Here’s how you can generate an `ASSEMBLYAI_API_KEY`:
 
-1. Sign Up or Log In
-	Go to https://www.assemblyai.com/
-	1. Click Sign Up to create a new account, or
- 	2. Click Log In if you already have one.
-	You can use an email/password, Google account, or GitHub account.
+---
 
-2. Access Your API Dashboard
-	Once logged in, you’ll be redirected to your Dashboard:
-	https://www.assemblyai.com/app/dashboard
+## Known Limitations
 
-3. Copy Your API Key
-On the dashboard:
-	1. Locate the “API Key” section (usually at the top right or in the main panel).
-	2. Click Copy to copy your API key to your clipboard.
-	3. Keep it private and secure — do not share it publicly or commit it to GitHub.
+- Third-party credentials from the original 2025 development environment are no longer included or maintained.
+- Jira field configuration can vary between Jira workspaces and may require adjustment.
+- Speaker diarization accuracy depends on audio quality and speaker overlap.
+- AI-generated summaries can introduce latency and should be reviewed by users.
+- Some external API or OAuth configuration may need to be updated to match current provider requirements.
 
- 
-### GEMINI API Key
-- Navigate to `/capstone-project-9900-w14a-almond/P25/backend/.env`
-```bash
-GEMINI_API_KEY
-```
-Here’s how you can generate a `GEMINI_API_KEY`:
-1. Sign in to Google AI Studio
-	1. Go to https://aistudio.google.com/
-	2. Sign in with your Google account.
+---
 
-2. Create or Select a Project
-	1. If you don’t have a project yet, click “Create new project”.
-	2. If you already have one, select your existing project.
+## Portfolio Context
 
-3. Generate an API Key
-	1.	In AI Studio’s left navigation panel, click “Get API key” or “API Keys”.
-	2.	Click “Create API key”.
-	3.	Select the project you want to link.
-	4.	Your API key will be displayed — copy and save it somewhere secure (never upload it to GitHub or share it publicly).
-
-4. Enable the Gemini API (if not enabled yet)
-	1. Go to Google Cloud Console
-	2. Select your project
-	3. Navigate to API & Services → Library
-
-
-### NEON DATABASE_URL
-- Navigate to `/capstone-project-9900-w14a-almond/P25/backend/.env`
-```bash
-DATABASE_URL
-```
-Here’s how you can generate a `DATABASE_URL` for Neon Database:
-1. Sign up / log in to Neon
-	1.  Go to https://neon.tech
-	2.	Sign up with GitHub, Google, or email.
-	3.	Log in to access the Neon Console.
-
-2. Create a new project
-	1.	Click New Project.
-	2.	Choose:
-		•	Project name (optional).
-		•	Region (pick the closest to your server or users).
-		•	Branch (leave default as main unless you need branching).
-	3.	Click Create Project.
-
-
-3. Get your connection string (Database URL)
-	1.	In your project dashboard, go to the Connection Details tab.
-	2.	Choose “psql” or “Connection string” view.
-	3.	You’ll see something like:
-		`postgresql://<username>:<password>@<hostname>/<dbname>`
-	4.	Copy the whole URL.
-
- 
+This repository is a cleaned portfolio version of a university team project. It is intended to demonstrate practical experience with backend development, APIs, databases, AI integration, authentication, external service integration, testing and collaborative software delivery.
